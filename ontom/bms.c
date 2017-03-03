@@ -562,7 +562,7 @@ int about_packet_reciev_done(struct charge_task *thiz,
             log_printf(WRN,
                   "BMS not recognized due to invalid BMS VERSION(SPN2565).");
             bit_clr(thiz, F_BMS_RECOGNIZED);
-            break;
+            //break;
         }
 
         if ( thiz->vehicle_info.spn2566_battery_type == 0 ||
@@ -850,7 +850,7 @@ void *thread_bms_write_service(void *arg) ___THREAD_ENTRY___
 
     s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
-    strcpy(ifr.ifr_name, "can1" );
+    strcpy(ifr.ifr_name, "can0" );
     ioctl(s, SIOCGIFINDEX, &ifr);
 
     addr.can_family = PF_CAN;
@@ -1020,7 +1020,7 @@ void *thread_bms_read_service(void *arg) ___THREAD_ENTRY___
 
     if ( done == NULL ) done = &mydone;
     s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    strcpy(ifr.ifr_name, "can1" );
+    strcpy(ifr.ifr_name, "can0" );
     ioctl(s, SIOCGIFINDEX, &ifr);
     addr.can_family = PF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;

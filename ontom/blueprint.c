@@ -15,7 +15,7 @@
 #include "Hachiko.h"
 #include "blueprint.h"
 #include "charge.h"
-#include "ajax.h"
+//#include "ajax.h"
 
 static int uart4_bp_evt_handle(struct bp_uart *self, BP_UART_EVENT evt,
                      struct bp_evt_param *param);
@@ -1820,6 +1820,8 @@ continue_to_send:
     return NULL;
 }
 
+
+#if 0
 // 生成串口通信统计页面
 int ajax_uart_debug_page(struct ajax_xml_struct *thiz)
 {
@@ -2064,3 +2066,5 @@ int ajax_uart_debug_page(struct ajax_xml_struct *thiz)
     thiz->xml_len = output_len;
     return ERR_OK;
 }
+
+#endif

@@ -15,8 +15,8 @@
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
-#include "mongoose.h"
-#include "ajax.h"
+//#include "mongoose.h"
+//#include "ajax.h"
 #include "config.h"
 #include "error.h"
 #include "log.h"
@@ -31,6 +31,7 @@ extern void * thread_backgroud_service(void *) ___THREAD_ENTRY___;
 extern void * thread_charge_task_service(void *) ___THREAD_ENTRY___;
 extern void * thread_uart_service(void *arg) ___THREAD_ENTRY___;
 
+#if 0
 // 串口通信 服务线程
 // 提供串口通信服务
 void *thread_measure_service(void *arg) ___THREAD_ENTRY___
@@ -124,6 +125,7 @@ void *thread_backgroud_service(void *arg) ___THREAD_ENTRY___
 
     return NULL;
 }
+#endif
 
 int main()
 {
@@ -202,7 +204,7 @@ int main()
 
     // 启动八公定时器
     Hachiko_init();
-
+#if 0
     // mongoose 线程，用来处理AJAX请求，解析由客户提交的请求，返回应答的xml文件或其他数据
     ret = pthread_create( & tid, &attr, thread_xml_service, &thread_done[0]);
     if ( 0 != ret ) {
@@ -212,7 +214,7 @@ int main()
         goto die;
     }
     log_printf(INF, "mongoose service start up.                         DONE.");
-
+#endif
     // BMS 数据包写线程，从队列中取出要写的数据包并通过CAN总线发送出去
     ret = pthread_create( & tid, &attr, thread_bms_write_service,
                           &thread_done[1]);
@@ -234,7 +236,7 @@ int main()
         goto die;
     }
     log_printf(INF, "CAN-BUS writer start up.                           DONE.");
-
+#if 0
     // 串口服务线程，和读卡器，采样盒，电能表进行数据交换，测量
     ret = pthread_create( & tid, &attr, thread_measure_service, &thread_done[3]);
     if ( 0 != ret ) {
@@ -288,7 +290,7 @@ int main()
         goto die;
     }
     log_printf(INF, "UART framework start up.                           DONE.");
-
+#endif
     if ( s == 0 ) {
         pthread_attr_destroy(&attr);
     }
