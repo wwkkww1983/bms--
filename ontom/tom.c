@@ -15,117 +15,14 @@
 
 #include <linux/can.h>
 #include <linux/can/raw.h>
-//#include "mongoose.h"
-//#include "ajax.h"
+
 #include "config.h"
 #include "error.h"
 #include "log.h"
 #include "Hachiko.h"
-#include "librf.h"
-extern void * thread_xml_service(void *) ___THREAD_ENTRY___;
+
 extern void * thread_bms_write_service(void *) ___THREAD_ENTRY___;
 extern void * thread_bms_read_service(void *) ___THREAD_ENTRY___;
-extern void * thread_measure_service(void *) ___THREAD_ENTRY___;
-extern void * thread_charger_service(void *) ___THREAD_ENTRY___;
-extern void * thread_backgroud_service(void *) ___THREAD_ENTRY___;
-extern void * thread_charge_task_service(void *) ___THREAD_ENTRY___;
-extern void * thread_uart_service(void *arg) ___THREAD_ENTRY___;
-
-#if 0
-// 串口通信 服务线程
-// 提供串口通信服务
-void *thread_measure_service(void *arg) ___THREAD_ENTRY___
-{
-    int *done = (int *)arg;
-    int mydone = 0;
-    int icdev, ret, initok = 1;
-    unsigned long _Snr;
-    char buff[32] = {0};
-
-    if ( done == NULL ) done = &mydone;
-    log_printf(INF, "%s running...", __FUNCTION__);
-____reinit:
-    icdev = dc_init(100, 9600);//初始化串口1，波特率9600
-
-    if ( icdev > 0 ) {
-        log_printf(INF, "open D8 reader OK...");
-        dc_beep(icdev, 100);
-    } else {
-        initok = 0;
-        log_printf(ERR, "open D8 reader ERROR: %d", icdev);
-    }
-
-    while ( ! *done ) {
-
-        sleep(2);
-
-        if ( 0 == initok ) {
-            goto ____reinit;
-            continue;
-        }
-        ret = dc_card(icdev, 0, &_Snr);
-        if ( ret != 0 ) {
-            continue;
-       }
-        log_printf(INF, "GET CARD: %08X", _Snr);
-        dc_beep(icdev, 50);
-        usleep(100000);
-        dc_beep(icdev, 50);
-
-        sprintf(buff, "%08X", (unsigned int)_Snr);
-        if ( config_read("triger_card_sn")[0] == 'N' ) {
-            config_write("triger_card_sn", buff);
-            log_printf(INF, "card trigerd.");
-            continue;
-        }
-        if ( 0 != strcmp(config_read("triger_card_sn"), buff) ) {
-            continue;
-        } else if ( config_read("confirm_card_sn")[0] == 'N' ) {
-            config_write("confirm_card_sn", buff);
-            log_printf(INF, "card confirmed.");
-            continue;
-        }
-
-        if ( 0 == strcmp(config_read("triger_card_sn"), buff) &&
-             0 == strcmp(config_read("confirm_card_sn"), buff) ) {
-            config_write("settle_card_sn", buff);
-            log_printf(INF, "card settled.");
-            continue;
-        }
-    }
-
-    return NULL;
-}
-
-// 充电机通信服务线程
-void *thread_charger_service(void *arg) ___THREAD_ENTRY___
-{
-    int *done = (int *)arg;
-    int mydone = 0;
-    if ( done == NULL ) done = &mydone;
-    log_printf(INF, "%s running...", __FUNCTION__);
-
-    while ( ! *done ) {
-        usleep(5000);
-    }
-    return NULL;
-}
-
-// 后台通信服务线程
-void *thread_backgroud_service(void *arg) ___THREAD_ENTRY___
-{
-    int *done = (int *)arg;
-    int mydone = 0;
-    if ( done == NULL ) done = &mydone;
-    log_printf(INF, "%s running...", __FUNCTION__);
-
-    while ( ! *done ) {
-        usleep(5000);
-    }
-
-    return NULL;
-}
-#endif
 
 int main()
 {
@@ -145,7 +42,7 @@ int main()
             "          \\___/|_| |_|_|\\__, |_|   \\___/ \\_/\\_/ \\___|_|\n"
             "                        |___/\n"
            );
-    printf( "           \nCopyright © 2014 杭州奥能电源设备股份有限公司版权所有\n");
+    printf( "           \nCopyright © Andy zhao for SerialSystem\n");
     printf( "                            %s %s\n\n", __DATE__, __TIME__);
     printf("系统启动中.....\n\n\n\n");
 
@@ -193,28 +90,10 @@ int main()
         }
     }
 
-    // 检查是否需要开启SOCKET端的配置服务器以接受网络端的配置
-    user_cfg = config_read("socket_config");
-    if ( strcmp(user_cfg, "TURE") ||
-         strcmp(user_cfg, "true") ) {
-        pthread_create( & tid, &attr, config_drive_service, NULL);
-        sprintf(buff, "%d", (int)tid);
-        config_write("thread_config_server_id", buff);
-    }
 
-    // 启动八公定时器
+    // 启动定时器
     Hachiko_init();
-#if 0
-    // mongoose 线程，用来处理AJAX请求，解析由客户提交的请求，返回应答的xml文件或其他数据
-    ret = pthread_create( & tid, &attr, thread_xml_service, &thread_done[0]);
-    if ( 0 != ret ) {
-        errcode  = 0x1000;
-        log_printf(ERR,
-                   "mongoose service start up.                     FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "mongoose service start up.                         DONE.");
-#endif
+
     // BMS 数据包写线程，从队列中取出要写的数据包并通过CAN总线发送出去
     ret = pthread_create( & tid, &attr, thread_bms_write_service,
                           &thread_done[1]);
@@ -236,61 +115,7 @@ int main()
         goto die;
     }
     log_printf(INF, "CAN-BUS writer start up.                           DONE.");
-#if 0
-    // 串口服务线程，和读卡器，采样盒，电能表进行数据交换，测量
-    ret = pthread_create( & tid, &attr, thread_measure_service, &thread_done[3]);
-    if ( 0 != ret ) {
-        errcode  = 0x1003;
-        log_printf(ERR,
-                   "EX-measure service start up.                   FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "EX-measure service start up.                       DONE.");
 
-    // 串口服务线程，和充电机进行通信
-    ret = pthread_create( & tid, &attr, thread_charger_service,
-                          &thread_done[4]);
-    if ( 0 != ret ) {
-        errcode  = 0x1004;
-        log_printf(ERR,
-                   "charger service start up.                      FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "charger service start up.                          DONE.");
-
-    // 后台通信线程
-    ret = pthread_create( & tid, &attr, thread_backgroud_service,
-                          &thread_done[5]);
-    if ( 0 != ret ) {
-        errcode  = 0x1004;
-        log_printf(ERR,
-                   "backgroud service start up.                    FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "backgroud service start up.                        DONE.");
-
-    // 充电线程，负责充电逻辑
-    ret = pthread_create( & tid, &attr, thread_charge_task_service,
-                          &thread_done[6]);
-    if ( 0 != ret ) {
-        errcode  = 0x1005;
-        log_printf(ERR,
-                   "charge service start up.                       FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "charge service start up.                           DONE.");
-
-    // 串口通信线程
-    ret = pthread_create( & tid, &attr, thread_uart_service,
-                          &thread_done[7]);
-    if ( 0 != ret ) {
-        errcode  = 0x1006;
-        log_printf(ERR,
-                   "UART framework start up.                       FAILE!!!!");
-        goto die;
-    }
-    log_printf(INF, "UART framework start up.                           DONE.");
-#endif
     if ( s == 0 ) {
         pthread_attr_destroy(&attr);
     }

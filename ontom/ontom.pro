@@ -8,15 +8,13 @@ DEPENDPATH += .
 INCLUDEPATH += .
 
 # Input
-HEADERS += blueprint.h \
+HEADERS += \
            bms.h \
            charge.h \
            config.h \
            error.h \
            Hachiko.h \
-           librf.h \
-           log.h \
-           rsrvdefine.h \
-           tom.h \
-           zeus.h
-SOURCES += blueprint.c bms.c charge.c config.c Hachiko.c log.c tom.c
+           log.h
+SOURCES += bms.c config.c Hachiko.c log.c tom.c
+
+LIBS += -lrt

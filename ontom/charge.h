@@ -544,6 +544,11 @@ struct charge_task {
     struct pgn4864_BSM bms_battery_status;
 };
 
+struct charge_task tom;
+struct charge_task *task = &tom;
+
+
+
 /* 系统信号定义
  * 前 128个信号为系统标记
  */
@@ -699,7 +704,7 @@ void charge_task_implemention(struct charge_task *thiz);
 void charge_task_destroy(struct charge_task *thiz);
 // 重置充电任务
 void charge_task_reset(struct charge_task *thiz);
-extern struct charge_task *task;
+//extern struct charge_task *task;
 
 // 扩展测量数据刷新
 void deal_with_measure_data(struct charge_task *);
@@ -715,7 +720,7 @@ void deal_with_charge_logic(struct charge_task *);
  * remote_single[0:511]
  */
 // 遥信位,遥测偏移定义
-#include "rsrvdefine.h"
+//#include "rsrvdefine.h"
 // 位设置
 static inline void bit_set(struct charge_task *tsk, ONTOM_FLAG_SINGLE single)
 {
